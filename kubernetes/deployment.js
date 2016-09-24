@@ -2,12 +2,49 @@ var runProcessAndCapture = require('orchestration-util-process').runProcessAndCa
 var runProcessWithOutputAndEnvAndInput = require('orchestration-util-process').runProcessWithOutputAndEnvAndInput;
 var process = require('process');
 
-function getDeploymentDocument(deploymentName, image, version, containerPorts) {
+function getDeploymentDocument(deploymentName, image, version, containerPorts, healthCheck) {
   var containerPortsBuilt = [];
   for (var i = 0; i < containerPorts.length; i++) {
     containerPortsBuilt.push({
       "containerPort": containerPorts[i]
     });
+  }
+
+  var container = null;
+  if (healthCheck != null) {
+    console.log('using health check')
+    console.log(healthCheck);
+    container = {
+      "name": deploymentName,
+      "image": image + ":" + version,
+      "ports": containerPortsBuilt,
+      "resources": {
+        "requests": {
+          "cpu": 0
+        }
+      },
+      "readinessProbe": {
+        "httpGet": {
+          "path": healthCheck.path,
+          "port": healthCheck.port
+        },
+        "periodSeconds": 1,
+        "timeoutSeconds": 1,
+        "successThreshold": 1,
+        "failureThreshold": 10
+      }
+    };
+  } else {
+    container = {
+      "name": deploymentName,
+      "image": image + ":" + version,
+      "ports": containerPortsBuilt,
+      "resources": {
+        "requests": {
+          "cpu": 0
+        }
+      }
+    }; 
   }
 
   return {
@@ -26,16 +63,7 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts) {
         },
         "spec": {
           "containers": [
-            {
-              "name": deploymentName,
-              "image": image + ":" + version,
-              "ports": containerPortsBuilt,
-              "resources": {
-                "requests": {
-                  "cpu": 0
-                }
-              }
-            }
+            container
           ]
         }
       }
@@ -72,7 +100,7 @@ function ifDeploymentExists(deploymentName, onExistsCallback, onNotExistsCallbac
   )
 }
 
-function createDeployment(deploymentName, image, version, containerPorts, callback) {
+function createDeployment(deploymentName, image, version, containerPorts, healthCheck, callback) {
   console.log("Creating Kubernetes deployment for container...");
   runProcessWithOutputAndEnvAndInput(
     'kubectl',
@@ -85,12 +113,12 @@ function createDeployment(deploymentName, image, version, containerPorts, callba
     {
       'HOME': process.cwd()
     },
-    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts)),
+    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, healthCheck)),
     callback
   );
 }
 
-function replaceDeployment(deploymentName, image, version, containerPorts, callback) {
+function replaceDeployment(deploymentName, image, version, containerPorts, healthCheck, callback) {
   console.log("Updating Kubernetes deployment with new version...");
   runProcessWithOutputAndEnvAndInput(
     'kubectl',
@@ -105,7 +133,7 @@ function replaceDeployment(deploymentName, image, version, containerPorts, callb
     {
       'HOME': process.cwd()
     },
-    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts)),
+    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, healthCheck)),
     callback
   );
 }

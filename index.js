@@ -66,6 +66,14 @@ function deployToCluster(config, environment, callback) {
       }
     }
 
+    var healthCheck = null;
+    if (config.orchestration.healthCheckPort != null && config.orchestration.healthCheckPath != null) {
+      healthCheck = {
+        port: config.orchestration.healthCheckPort,
+        path: config.orchestration.healthCheckPath,
+      }
+    }
+
     cluster.loadAuthenticationCredentials(
       config.cluster.environments[environment].project, 
       config.cluster.environments[environment].clusterName, 
@@ -80,6 +88,7 @@ function deployToCluster(config, environment, callback) {
               dockerPrefix + config.package.name,
               config.package.version,
               containerPorts,
+              healthCheck,
               deployServices);
           },
           () => {
@@ -88,6 +97,7 @@ function deployToCluster(config, environment, callback) {
               dockerPrefix + config.package.name,
               config.package.version,
               containerPorts,
+              healthCheck,
               deployServices);
           },
           callback);
