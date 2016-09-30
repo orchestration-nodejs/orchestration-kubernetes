@@ -8,7 +8,7 @@ function deployToCluster(config, environment, callback) {
     deployment.waitForDeploymentToComplete(
       config.package.name,
       config.package.name,
-      config.package.version,
+      config.dockerImageVersion || config.package.version,
       callback);
   }
 
@@ -86,7 +86,7 @@ function deployToCluster(config, environment, callback) {
             deployment.replaceDeployment(
               config.package.name, 
               dockerPrefix + config.package.name,
-              config.package.version,
+              config.dockerImageVersion || config.package.version,
               containerPorts,
               healthCheck,
               deployServices);
@@ -95,7 +95,7 @@ function deployToCluster(config, environment, callback) {
             deployment.createDeployment(
               config.package.name, 
               dockerPrefix + config.package.name,
-              config.package.version,
+              config.dockerImageVersion || config.package.version,
               containerPorts,
               healthCheck,
               deployServices);
@@ -104,7 +104,7 @@ function deployToCluster(config, environment, callback) {
       });
   };
 
-  console.log("Deploying " + config.package.name + " at version " + config.package.version + " to cluster...");
+  console.log("Deploying " + config.package.name + " at version " + (config.dockerImageVersion || config.package.version) + " to cluster...");
 
   cluster.ifClusterExists(
     config.cluster.environments[environment].project, 
