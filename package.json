@@ -1,6 +1,6 @@
 {
   "name": "orchestration-kubernetes",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Deploy Docker images onto Kubernetes clusters.",
   "main": "index.js",
   "scripts": {
@@ -22,6 +22,6 @@
   },
   "homepage": "https://github.com/orchestration-nodejs/orchestration-kubernetes#readme",
   "dependencies": {
-    "orchestration-util-process": "0.0.1"
+    "orchestration-util-process": "^0.1.1"
   }
 }

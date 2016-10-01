@@ -1,5 +1,5 @@
 var runProcessAndCapture = require('orchestration-util-process').runProcessAndCapture;
-var runProcessWithOutputAndEnvAndInput = require('orchestration-util-process').runProcessWithOutputAndEnvAndInput;
+var runProcessWithOutputAndInput = require('orchestration-util-process').runProcessWithOutputAndInput;
 var process = require('process');
 
 function getDeploymentDocument(deploymentName, image, version, containerPorts, healthCheck) {
@@ -76,6 +76,7 @@ function ifDeploymentExists(deploymentName, onExistsCallback, onNotExistsCallbac
   runProcessAndCapture(
     'kubectl',
     [
+      '--kubeconfig=.kube/config',
       '--output',
       'json',
       'get',
@@ -102,17 +103,15 @@ function ifDeploymentExists(deploymentName, onExistsCallback, onNotExistsCallbac
 
 function createDeployment(deploymentName, image, version, containerPorts, healthCheck, callback) {
   console.log("Creating Kubernetes deployment for container...");
-  runProcessWithOutputAndEnvAndInput(
+  runProcessWithOutputAndInput(
     'kubectl',
     [
+      '--kubeconfig=.kube/config',
       'create',
       '-f',
       '-',
       '--record',
     ],
-    {
-      'HOME': process.cwd()
-    },
     JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, healthCheck)),
     callback
   );
@@ -120,9 +119,10 @@ function createDeployment(deploymentName, image, version, containerPorts, health
 
 function replaceDeployment(deploymentName, image, version, containerPorts, healthCheck, callback) {
   console.log("Updating Kubernetes deployment with new version...");
-  runProcessWithOutputAndEnvAndInput(
+  runProcessWithOutputAndInput(
     'kubectl',
     [
+      '--kubeconfig=.kube/config',
       'replace',
       'deployment',
       deploymentName,
@@ -130,9 +130,6 @@ function replaceDeployment(deploymentName, image, version, containerPorts, healt
       '-',
       '--record'
     ],
-    {
-      'HOME': process.cwd()
-    },
     JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, healthCheck)),
     callback
   );
