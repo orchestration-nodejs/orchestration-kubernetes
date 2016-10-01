@@ -1,5 +1,5 @@
 var runProcessAndCapture = require('orchestration-util-process').runProcessAndCapture;
-var runProcessWithOutputAndEnv = require('orchestration-util-process').runProcessWithOutputAndEnv;
+var runProcessWithOutput = require('orchestration-util-process').runProcessWithOutput;
 var process = require('process');
 
 function ifServiceExists(serviceName, onExistsCallback, onNotExistsCallback, onErrorCallback) {
@@ -7,6 +7,7 @@ function ifServiceExists(serviceName, onExistsCallback, onNotExistsCallback, onE
   runProcessAndCapture(
     'kubectl',
     [
+      '--kubeconfig=.kube/config',
       '--output',
       'json',
       'get',
@@ -35,9 +36,10 @@ function createServiceForDeployment(deploymentName, serviceProps, callback) {
   console.log("Creating service for deployment " + deploymentName + "...");
 
   if (serviceProps.type == 'LoadBalancer') {
-    runProcessWithOutputAndEnv(
+    runProcessWithOutput(
       'kubectl',
       [
+        '--kubeconfig=.kube/config',
         'expose',
         'deployment',
         deploymentName,
@@ -48,16 +50,14 @@ function createServiceForDeployment(deploymentName, serviceProps, callback) {
         '--load-balancer-ip='+serviceProps.ipAddress,
         '--name='+serviceProps.name
       ],
-      {
-        'HOME': process.cwd()
-      },
       callback
     );
   } else if (serviceProps.type == 'NodePort') {
     if (serviceProps.publicPort != null) {
-      runProcessWithOutputAndEnv(
+      runProcessWithOutput(
         'kubectl',
         [
+          '--kubeconfig=.kube/config',
           'expose',
           'deployment',
           deploymentName,
@@ -67,15 +67,13 @@ function createServiceForDeployment(deploymentName, serviceProps, callback) {
           '--protocol='+serviceProps.protocol,
           '--name='+serviceProps.name
         ],
-        {
-          'HOME': process.cwd()
-        },
         callback
       );
     } else {
-      runProcessWithOutputAndEnv(
+      runProcessWithOutput(
         'kubectl',
         [
+          '--kubeconfig=.kube/config',
           'expose',
           'deployment',
           deploymentName,
@@ -84,16 +82,14 @@ function createServiceForDeployment(deploymentName, serviceProps, callback) {
           '--protocol='+serviceProps.protocol,
           '--name='+serviceProps.name
         ],
-        {
-          'HOME': process.cwd()
-        },
         callback
       );
     }
   } else if (serviceProps.type == 'ClusterIP') {
-    runProcessWithOutputAndEnv(
+    runProcessWithOutput(
       'kubectl',
       [
+        '--kubeconfig=.kube/config',
         'expose',
         'deployment',
         deploymentName,
@@ -103,9 +99,6 @@ function createServiceForDeployment(deploymentName, serviceProps, callback) {
         '--protocol='+serviceProps.protocol,
         '--name='+serviceProps.name
       ],
-      {
-        'HOME': process.cwd()
-      },
       callback
     );
   }
