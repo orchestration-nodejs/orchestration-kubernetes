@@ -38,7 +38,8 @@ function deployToCluster(config, environment, callback) {
             }
           }
         )
-      });
+      },
+      onError);
   }
 
   var deployServices = function(err) {
