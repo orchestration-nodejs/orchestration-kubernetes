@@ -5,9 +5,18 @@ var process = require('process');
 function getDeploymentDocument(deploymentName, image, version, containerPorts, envs, replicas, hostVolumes, healthCheck) {
   var containerPortsBuilt = [];
   for (var i = 0; i < containerPorts.length; i++) {
-    containerPortsBuilt.push({
-      "containerPort": containerPorts[i]
-    });
+    if (containerPorts[i].type === 'HostPort') {
+      containerPortsBuilt.push({
+        "containerPort": containerPorts[i].containerPort,
+        "hostPort": containerPorts[i].hostPort,
+        "protocol": containerPorts[i].protocol,
+        "name": containerPorts[i].name
+      });
+    } else {
+      containerPortsBuilt.push({
+        "containerPort": containerPorts[i].containerPort
+      });
+    }
   }
 
   var envsBuilt = [];

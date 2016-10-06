@@ -61,9 +61,26 @@ function deployToCluster(config, environment, callback) {
     var services = config.orchestration.services[environment];
     var containerPorts = [];
     for (var i = 0; i < services.length; i++) {
-      var containerPort = services[i].containerPort;
-      if (containerPort != null) {
-        containerPorts.push(containerPort);
+      if (services[i].type === 'HostPort') {
+        if (services[i].containerPort != null && 
+            services[i].hostPort != null &&
+            services[i].name != null) {
+          containerPorts.push({
+            "type": "HostPort",
+            "name": services[i].name,
+            "containerPort": services[i].containerPort,
+            "hostPort": services[i].hostPort,
+            "protocol": services[i].protocol || "TCP"
+          });
+        }
+      } else {
+        var containerPort = services[i].containerPort;
+        if (containerPort != null) {
+          containerPorts.push({
+            "type": "ServiceBound",
+            "containerPort": containerPort
+          });
+        }
       }
     }
 
