@@ -2,12 +2,45 @@ var runProcessAndCapture = require('orchestration-util-process').runProcessAndCa
 var runProcessWithOutputAndInput = require('orchestration-util-process').runProcessWithOutputAndInput;
 var process = require('process');
 
-function getDeploymentDocument(deploymentName, image, version, containerPorts, healthCheck) {
+function getDeploymentDocument(deploymentName, image, version, containerPorts, envs, replicas, hostVolumes, healthCheck) {
   var containerPortsBuilt = [];
   for (var i = 0; i < containerPorts.length; i++) {
     containerPortsBuilt.push({
       "containerPort": containerPorts[i]
     });
+  }
+
+  var envsBuilt = [];
+  if (envs != null) {
+    for (var key in envs) {
+      if (envs.hasOwnProperty(key)) {
+        envsBuilt.push({
+          "name": key,
+          "value": envs[key]
+        });
+      }
+    }
+  }
+
+  if (replicas == null) {
+    replicas = 2;
+  }
+
+  var volumeMountsBuilt = [];
+  var volumesBuilt = [];
+  if (hostVolumes != null) {
+    for (var i = 0; i < hostVolumes.length; i++) {
+      volumeMountsBuilt.push({
+        "mountPath": hostVolumes[i].target,
+        "name": hostVolumes[i].name
+      });
+      volumesBuilt.push({
+        "name": hostVolumes[i].name,
+        "hostPath": {
+          "path": hostVolumes[i].source
+        }
+      });
+    }
   }
 
   var container = null;
@@ -23,6 +56,8 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, h
           "cpu": 0
         }
       },
+      "env": envsBuilt,
+      "volumeMounts": volumeMountsBuilt,
       "readinessProbe": {
         "httpGet": {
           "path": healthCheck.path,
@@ -43,7 +78,9 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, h
         "requests": {
           "cpu": 0
         }
-      }
+      },
+      "env": envsBuilt,
+      "volumeMounts": volumeMountsBuilt
     }; 
   }
 
@@ -54,7 +91,7 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, h
       "name": deploymentName
     },
     "spec": {
-      "replicas": 2,
+      "replicas": replicas,
       "template": {
         "metadata": {
           "labels": {
@@ -64,7 +101,8 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, h
         "spec": {
           "containers": [
             container
-          ]
+          ],
+          "volumes": volumesBuilt
         }
       }
     }
@@ -101,7 +139,7 @@ function ifDeploymentExists(deploymentName, onExistsCallback, onNotExistsCallbac
   )
 }
 
-function createDeployment(deploymentName, image, version, containerPorts, healthCheck, callback) {
+function createDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, callback) {
   console.log("Creating Kubernetes deployment for container...");
   runProcessWithOutputAndInput(
     'kubectl',
@@ -112,12 +150,12 @@ function createDeployment(deploymentName, image, version, containerPorts, health
       '-',
       '--record',
     ],
-    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, healthCheck)),
+    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck)),
     callback
   );
 }
 
-function replaceDeployment(deploymentName, image, version, containerPorts, healthCheck, callback) {
+function replaceDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, callback) {
   console.log("Updating Kubernetes deployment with new version...");
   runProcessWithOutputAndInput(
     'kubectl',
@@ -130,7 +168,7 @@ function replaceDeployment(deploymentName, image, version, containerPorts, healt
       '-',
       '--record'
     ],
-    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, healthCheck)),
+    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck)),
     callback
   );
 }

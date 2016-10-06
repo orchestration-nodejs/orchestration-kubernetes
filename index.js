@@ -75,6 +75,30 @@ function deployToCluster(config, environment, callback) {
       }
     }
 
+    var envs = null;
+    if (config.orchestration.variables != null) {
+      var vars = config.orchestration.variables[environment];
+      if (vars != null) {
+        envs = vars;
+      }
+    }
+
+    var replicas = null;
+    if (config.orchestration.replicas != null) {
+      var replicaConfig = config.orchestration.replicas[environment];
+      if (replicaConfig != null) {
+        replicas = replicaConfig;
+      } 
+    }
+
+    var hostVolumes = null;
+    if (config.orchestration.hostVolumes != null) {
+      var hostVolumeConfig = config.orchestration.hostVolumes[environment];
+      if (hostVolumeConfig != null) {
+        hostVolumes = hostVolumeConfig;
+      } 
+    }
+
     cluster.loadAuthenticationCredentials(
       config.cluster.environments[environment].project, 
       config.cluster.environments[environment].clusterName, 
@@ -89,6 +113,9 @@ function deployToCluster(config, environment, callback) {
               dockerPrefix + config.package.name,
               config.dockerImageVersion || config.package.version,
               containerPorts,
+              envs,
+              replicas,
+              hostVolumes,
               healthCheck,
               deployServices);
           },
@@ -98,6 +125,9 @@ function deployToCluster(config, environment, callback) {
               dockerPrefix + config.package.name,
               config.dockerImageVersion || config.package.version,
               containerPorts,
+              envs,
+              replicas,
+              hostVolumes,
               healthCheck,
               deployServices);
           },
