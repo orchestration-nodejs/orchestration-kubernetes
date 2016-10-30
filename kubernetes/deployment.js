@@ -1,6 +1,7 @@
 var runProcessAndCapture = require('orchestration-util-process').runProcessAndCapture;
 var runProcessWithOutputAndInput = require('orchestration-util-process').runProcessWithOutputAndInput;
 var process = require('process');
+var spawn = require('child_process').spawn;
 
 function getDeploymentDocument(deploymentName, image, version, containerPorts, envs, replicas, hostVolumes, healthCheck) {
   var containerPortsBuilt = [];
@@ -100,7 +101,15 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, e
       "name": deploymentName
     },
     "spec": {
+      "strategy": {
+        "type": "RollingUpdate",
+        "rollingUpdate": {
+          "maxUnavailable": 0,
+          "maxSurge": 1
+        }
+      },
       "replicas": replicas,
+      "minReadySeconds": 60,
       "template": {
         "metadata": {
           "labels": {
@@ -170,9 +179,7 @@ function replaceDeployment(deploymentName, image, version, containerPorts, env, 
     'kubectl',
     [
       '--kubeconfig=.kube/config',
-      'replace',
-      'deployment',
-      deploymentName,
+      'apply',
       '-f',
       '-',
       '--record'
@@ -183,8 +190,46 @@ function replaceDeployment(deploymentName, image, version, containerPorts, env, 
 }
 
 function waitForDeploymentToComplete(deploymentName, image, version, callback) {
-  console.log("TODO: Monitor deployment");
-  callback();
+  var checkIfDeploymentComplete = null;
+  var checks = 0;
+  checkIfDeploymentComplete = () => {
+    runProcessAndCapture(
+      'kubectl',
+      [
+        '--kubeconfig=.kube/config',
+        '--output',
+        'json',
+        'get',
+        'deployment',
+        deploymentName
+      ],
+      function(output, err) {
+        if (err) { callback(err); return; }
+
+        checks++;
+
+        var data = JSON.parse(output);
+
+        if (data.status.unavailableReplicas === null ||
+            data.status.unavailableReplicas === undefined ||
+            data.status.unavailableReplicas === 0) {
+          // Rollout is complete.
+          console.log('Deployment rollout is complete!');
+          callback();
+        } else {
+          if (checks >= 100) {
+            // Timed out after 5 minutes
+            callback(new Error('deployment timed out after 5 minutes'));
+          } else {
+            // Rollout is not complete.
+            console.log('Deployment still has unavailableReplicas != 0');
+            setTimeout(checkIfDeploymentComplete, 3000);
+          }
+        }
+      }
+    );
+  }
+  checkIfDeploymentComplete();
 }
 
 module.exports = {
