@@ -3,11 +3,16 @@ var deployment = require('./kubernetes/deployment');
 var service = require('./kubernetes/service');
 
 function deployToCluster(config, environment, callback) {
+  var deploymentName = config.package.name;
+  if (config.cluster && config.cluster.environments[environment] &&
+      config.cluster.environments[environment].deploymentName != null) {
+    deploymentName = config.cluster.environments[environment].deploymentName;
+  }
+
   var monitorDeployment = function(err) {
     if (err) { callback(err); return; }
     deployment.waitForDeploymentToComplete(
-      config.package.name,
-      config.package.name,
+      deploymentName,
       config.dockerImageVersion || config.package.version,
       callback);
   }
@@ -28,7 +33,7 @@ function deployToCluster(config, environment, callback) {
       next,
       () => {
         service.createServiceForDeployment(
-          config.package.name,
+          deploymentName,
           services[offset],
           (err) => {
             if (err) {
@@ -123,10 +128,10 @@ function deployToCluster(config, environment, callback) {
       function(err) {
         if (err) { callback(err); return; }
         deployment.ifDeploymentExists(
-          config.package.name, 
+          deploymentName, 
           () => {
             deployment.replaceDeployment(
-              config.package.name, 
+              deploymentName, 
               dockerPrefix + config.package.name,
               config.dockerImageVersion || config.package.version,
               containerPorts,
@@ -138,7 +143,7 @@ function deployToCluster(config, environment, callback) {
           },
           () => {
             deployment.createDeployment(
-              config.package.name, 
+              deploymentName, 
               dockerPrefix + config.package.name,
               config.dockerImageVersion || config.package.version,
               containerPorts,
@@ -152,7 +157,7 @@ function deployToCluster(config, environment, callback) {
       });
   };
 
-  console.log("Deploying " + config.package.name + " at version " + (config.dockerImageVersion || config.package.version) + " to cluster...");
+  console.log("Deploying " + deploymentName + " at version " + (config.dockerImageVersion || config.package.version) + " to cluster...");
 
   cluster.ifClusterExists(
     config.cluster.environments[environment].project, 

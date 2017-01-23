@@ -189,7 +189,7 @@ function replaceDeployment(deploymentName, image, version, containerPorts, env, 
   );
 }
 
-function waitForDeploymentToComplete(deploymentName, image, version, callback) {
+function waitForDeploymentToComplete(deploymentName, version, callback) {
   var checkIfDeploymentComplete = null;
   var checks = 0;
   checkIfDeploymentComplete = () => {
