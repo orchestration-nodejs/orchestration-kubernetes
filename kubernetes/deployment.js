@@ -3,7 +3,7 @@ var runProcessWithOutputAndInput = require('orchestration-util-process').runProc
 var process = require('process');
 var spawn = require('child_process').spawn;
 
-function getDeploymentDocument(deploymentName, image, version, containerPorts, envs, replicas, hostVolumes, healthCheck) {
+function getDeploymentDocument(deploymentName, image, version, containerPorts, envs, replicas, hostVolumes, healthCheck, resourcesIn) {
   var containerPortsBuilt = [];
   for (var i = 0; i < containerPorts.length; i++) {
     if (containerPorts[i].type === 'HostPort') {
@@ -19,6 +19,8 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, e
       });
     }
   }
+
+  var resources = resourcesIn || {};
 
   var envsBuilt = [];
   if (envs != null) {
@@ -61,11 +63,7 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, e
       "name": deploymentName,
       "image": image + ":" + version,
       "ports": containerPortsBuilt,
-      "resources": {
-        "requests": {
-          "cpu": 0
-        }
-      },
+      "resources": resources,
       "env": envsBuilt,
       "volumeMounts": volumeMountsBuilt,
       "readinessProbe": {
@@ -84,11 +82,7 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, e
       "name": deploymentName,
       "image": image + ":" + version,
       "ports": containerPortsBuilt,
-      "resources": {
-        "requests": {
-          "cpu": 0
-        }
-      },
+      "resources": resources,
       "env": envsBuilt,
       "volumeMounts": volumeMountsBuilt
     }; 
@@ -157,7 +151,7 @@ function ifDeploymentExists(deploymentName, onExistsCallback, onNotExistsCallbac
   )
 }
 
-function createDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, callback) {
+function createDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, resources, callback) {
   console.log("Creating Kubernetes deployment for container...");
   runProcessWithOutputAndInput(
     'kubectl',
@@ -168,12 +162,12 @@ function createDeployment(deploymentName, image, version, containerPorts, env, r
       '-',
       '--record',
     ],
-    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck)),
+    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, resources)),
     callback
   );
 }
 
-function replaceDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, callback) {
+function replaceDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, resources, callback) {
   console.log("Updating Kubernetes deployment with new version...");
   runProcessWithOutputAndInput(
     'kubectl',
@@ -184,7 +178,7 @@ function replaceDeployment(deploymentName, image, version, containerPorts, env, 
       '-',
       '--record'
     ],
-    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck)),
+    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, resources)),
     callback
   );
 }

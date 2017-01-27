@@ -121,6 +121,14 @@ function deployToCluster(config, environment, callback) {
       } 
     }
 
+    var resources = null;
+    if (config.orchestration.resources != null) {
+      var resourcesConfig = config.orchestration.resources[environment];
+      if (resourcesConfig != null) {
+        resources = resourcesConfig;
+      }
+    }
+
     cluster.loadAuthenticationCredentials(
       config.cluster.environments[environment].project, 
       config.cluster.environments[environment].clusterName, 
@@ -139,6 +147,7 @@ function deployToCluster(config, environment, callback) {
               replicas,
               hostVolumes,
               healthCheck,
+              resources,
               deployServices);
           },
           () => {
@@ -151,6 +160,7 @@ function deployToCluster(config, environment, callback) {
               replicas,
               hostVolumes,
               healthCheck,
+              resources,
               deployServices);
           },
           callback);
