@@ -3,7 +3,7 @@ var runProcessWithOutputAndInput = require('orchestration-util-process').runProc
 var process = require('process');
 var spawn = require('child_process').spawn;
 
-function getDeploymentDocument(deploymentName, image, version, containerPorts, envs, replicas, hostVolumes, healthCheck, resourcesIn) {
+function getDeploymentDocument(deploymentName, image, version, containerPorts, envs, replicas, hostVolumes, healthCheck, nodeSelector, resourcesIn) {
   var containerPortsBuilt = [];
   for (var i = 0; i < containerPorts.length; i++) {
     if (containerPorts[i].type === 'HostPort') {
@@ -114,7 +114,8 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, e
           "containers": [
             container
           ],
-          "volumes": volumesBuilt
+          "volumes": volumesBuilt,
+          "nodeSelector": (nodeSelector || {})
         }
       }
     }
@@ -151,7 +152,7 @@ function ifDeploymentExists(deploymentName, onExistsCallback, onNotExistsCallbac
   )
 }
 
-function createDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, resources, callback) {
+function createDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, nodeSelector, resources, callback) {
   console.log("Creating Kubernetes deployment for container...");
   runProcessWithOutputAndInput(
     'kubectl',
@@ -162,12 +163,12 @@ function createDeployment(deploymentName, image, version, containerPorts, env, r
       '-',
       '--record',
     ],
-    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, resources)),
+    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, nodeSelector, resources)),
     callback
   );
 }
 
-function replaceDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, resources, callback) {
+function replaceDeployment(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, nodeSelector, resources, callback) {
   console.log("Updating Kubernetes deployment with new version...");
   runProcessWithOutputAndInput(
     'kubectl',
@@ -178,7 +179,7 @@ function replaceDeployment(deploymentName, image, version, containerPorts, env, 
       '-',
       '--record'
     ],
-    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, resources)),
+    JSON.stringify(getDeploymentDocument(deploymentName, image, version, containerPorts, env, replicas, hostVolumes, healthCheck, nodeSelector, resources)),
     callback
   );
 }

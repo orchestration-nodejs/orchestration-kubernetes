@@ -129,6 +129,13 @@ function deployToCluster(config, environment, callback) {
       }
     }
 
+    var nodeSelector = null;
+    if (config.cluster.environments[environment] != null) {
+      if (config.cluster.environments[environment].placement != null) {
+        nodeSelector = config.cluster.environments[environment].placement;
+      }
+    }
+
     cluster.loadAuthenticationCredentials(
       config.cluster.environments[environment].project, 
       config.cluster.environments[environment].clusterName, 
@@ -147,6 +154,7 @@ function deployToCluster(config, environment, callback) {
               replicas,
               hostVolumes,
               healthCheck,
+              nodeSelector,
               resources,
               deployServices);
           },
@@ -160,6 +168,7 @@ function deployToCluster(config, environment, callback) {
               replicas,
               hostVolumes,
               healthCheck,
+              nodeSelector,
               resources,
               deployServices);
           },

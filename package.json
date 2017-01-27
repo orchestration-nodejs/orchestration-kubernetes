@@ -1,6 +1,6 @@
 {
   "name": "orchestration-kubernetes",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Deploy Docker images onto Kubernetes clusters.",
   "main": "index.js",
   "scripts": {
