@@ -66,16 +66,7 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, e
       "resources": resources,
       "env": envsBuilt,
       "volumeMounts": volumeMountsBuilt,
-      "readinessProbe": {
-        "httpGet": {
-          "path": healthCheck.path,
-          "port": healthCheck.port
-        },
-        "periodSeconds": 1,
-        "timeoutSeconds": 1,
-        "successThreshold": 1,
-        "failureThreshold": 10
-      }
+      "readinessProbe": healthCheck
     };
   } else {
     container = {

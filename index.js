@@ -90,10 +90,18 @@ function deployToCluster(config, environment, callback) {
     }
 
     var healthCheck = null;
-    if (config.orchestration.healthCheckPort != null && config.orchestration.healthCheckPath != null) {
+    if (config.orchestration.healthCheck != null) {
+      healthCheck = config.orchestration.healthCheck;
+    } else if (config.orchestration.healthCheckPort != null && config.orchestration.healthCheckPath != null) {
       healthCheck = {
-        port: config.orchestration.healthCheckPort,
-        path: config.orchestration.healthCheckPath,
+        "httpGet": {
+          "path": config.orchestration.healthCheckPath,
+          "port": config.orchestration.healthCheckPort
+        },
+        "periodSeconds": 60,
+        "timeoutSeconds": 10,
+        "successThreshold": 1,
+        "failureThreshold": 10
       }
     }
 
