@@ -203,13 +203,13 @@ function waitForDeploymentToComplete(deploymentName, version, callback) {
           console.log('Deployment rollout is complete!');
           callback();
         } else {
-          if (checks >= 100) {
-            // Timed out after 5 minutes
-            callback(new Error('deployment timed out after 5 minutes'));
+          if (checks >= 120) {
+            // Timed out after 20 minutes
+            callback(new Error('Deployment timed out after 20 minutes'));
           } else {
             // Rollout is not complete.
             console.log('Deployment still has unavailableReplicas != 0');
-            setTimeout(checkIfDeploymentComplete, 3000);
+            setTimeout(checkIfDeploymentComplete, 10000);
           }
         }
       }
