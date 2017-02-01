@@ -38,6 +38,8 @@ function getDeploymentDocument(deploymentName, image, version, containerPorts, e
     replicas = 2;
   }
 
+  console.log("deployment will have " + replicas + " replicas");
+
   var volumeMountsBuilt = [];
   var volumesBuilt = [];
   if (hostVolumes != null) {
